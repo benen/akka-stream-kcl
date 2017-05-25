@@ -3,7 +3,7 @@ package com.benencahill.stream.kinesis
 import akka.NotUsed
 import akka.event.Logging
 import akka.stream.scaladsl.Source
-import akka.stream.stage.{GraphStage, GraphStageLogic, OutHandler, StageLogging}
+import akka.stream.stage._
 import akka.stream.{Attributes, Outlet, SourceShape}
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{KinesisClientLibConfiguration, Worker}
 import com.amazonaws.services.kinesis.model.Record
@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 /**
   * Created by benen on 22/05/17.
   */
-class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider) extends GraphStage[SourceShape[Record]] {
+class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider, limit: Int = 1) extends GraphStage[SourceShape[Record]] {
 
   val out = Outlet[Record]("KinesisSource.out")
   val shape = SourceShape.of(out)
@@ -25,6 +25,7 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
       var worker: Worker = _
       val queue = scala.collection.mutable.Queue.empty[Record]
       var demand = false
+      var pause = false
 
       override def preStart(): Unit = {
         log.debug(s"Setting up the callback")
@@ -38,6 +39,14 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
           else {
             log.debug(s"Buffering for now")
             queue.enqueue(records: _*)
+          }
+
+          if (queue.size > limit) {
+            log.debug(s"Buffer exceeds limit, shutting down KCL")
+            worker.requestShutdown()
+            pause = true
+          } else {
+            log.debug(s"There are ${queue.size} elements on the buffer")
           }
         }
         val process: Seq[Record] => Unit = callback.invoke
@@ -60,6 +69,16 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
           else {
             log.debug(s"Flagging demand")
             demand = true
+
+            if (pause) {
+              log.debug(s"Buffer has been drained. Starting KCL worker")
+              Future {
+                blocking {
+                  worker.run()
+                }
+              }(materializer.executionContext)
+              pause = false
+            }
           }
         }
 
@@ -83,7 +102,7 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
 
 object AsyncSideChannelKinesisSource {
   def apply(kclConfig: KinesisClientLibConfiguration): Source[Record, NotUsed] =
-    Source.fromGraph(new AsyncSideChannelKinesisSource(new KinesisWorkerProvider(kclConfig)))
+    Source.fromGraph(new AsyncSideChannelKinesisSource(KinesisWorkerProvider(kclConfig)))
       .withAttributes(Attributes.logLevels(onElement = Logging.DebugLevel))
 }
 

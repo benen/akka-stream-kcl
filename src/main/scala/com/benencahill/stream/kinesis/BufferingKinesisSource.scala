@@ -30,7 +30,7 @@ class BufferingKinesisSource(config: KinesisClientLibConfiguration) extends Grap
       attemptPush
     }
 
-    val worker = KinesisWorkerProvider(config, process)
+    val worker = KinesisWorkerProvider(config).instance(process)
     var demand = true
     var seq = 0
 

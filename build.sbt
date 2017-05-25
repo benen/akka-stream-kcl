@@ -18,6 +18,7 @@ lazy val `akka-streams-kinesis` = project.in(file("."))
       "org.scalatest" %% "scalatest" % "3.0.1" % "it,test",
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "it,test",
       "com.whisk" %% "docker-testkit-scalatest" % "0.9.0" % "it,test",
-      "com.whisk" %% "docker-testkit-impl-spotify" % "0.9.0" % "it,test"
+      "com.whisk" %% "docker-testkit-impl-spotify" % "0.9.0" % "it,test",
+      "org.mockito" % "mockito-core" % "2.8.9" % "test"
     )
   ))
