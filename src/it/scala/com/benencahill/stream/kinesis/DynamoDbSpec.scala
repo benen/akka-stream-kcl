@@ -16,8 +16,8 @@ trait DynamoDbSpec extends DockerKit { self: Suite =>
     .withLogLineReceiver(LogLineReceiver(true, (s : String) => println ("*** " + s) ))
     .withPorts(DynamoDbSpec.DynamoDbPort -> Some(dynamoDbPort))
     .withReadyChecker(DockerReadyChecker.HttpResponseCode(DynamoDbSpec.DynamoDbPort, code = 400)
-      .within(100.millis)
-      .looped(100, 1250.millis))
+      .within(1000.millis)
+      .looped(1000, 1250.millis))
 
   abstract override def dockerContainers: List[DockerContainer] =
     dynamoDbContainer :: super.dockerContainers

@@ -23,7 +23,7 @@ trait KinesisSpec extends DockerKit {
     .withLogLineReceiver(LogLineReceiver(true, (s : String) => println ("*** " + s) ))
     .withPorts(KinesisSpec.KinesisPort -> Some(kinesisPort))
     .withReadyChecker(DockerReadyChecker.HttpResponseCode(KinesisSpec.KinesisPort, code = 403)
-      .within(100.millis)
+      .within(1000.millis)
       .looped(1000, 1250.millis))
 
   val kinesisClient = AmazonKinesisClientBuilder.standard()

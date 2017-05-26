@@ -19,7 +19,7 @@ class AsyncSideChannelKinesisSourceSpec
     with ScalaFutures
     with Matchers {
 
-  implicit val pc = PatienceConfig(Span(60, Seconds), Span(1, Second))
+  implicit val pc = PatienceConfig(Span(120, Seconds), Span(1, Second))
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
