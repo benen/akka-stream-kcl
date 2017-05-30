@@ -8,14 +8,10 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Second, Seconds, Span}
 import org.scalatest.{FlatSpec, Matchers}
 
-/**
-  * Created by benen on 15/05/17.
-  */
-
 class AsyncSideChannelKinesisSourceSpec
   extends FlatSpec
     with DockerKitSpotify
-    with KCLSpec
+    with KCLSuite
     with ScalaFutures
     with Matchers {
 
@@ -37,6 +33,19 @@ class AsyncSideChannelKinesisSourceSpec
     // then
     whenReady(results) { collected =>
       collected should have size 1
+    }
+  }
+
+  it should "Read more elements than the buffer can handle" in {
+    // given
+    enqueue(20000)
+
+    // when
+    val results = AsyncSideChannelKinesisSource(kclConf, 10000).take(20000).toMat(Sink.seq)(Keep.right).run()
+
+    // then
+    whenReady(results) { collected =>
+      collected should have size 20000
     }
   }
 

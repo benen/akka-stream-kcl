@@ -9,16 +9,15 @@ import com.amazonaws.services.kinesis.model.Record
 import scala.concurrent.Await
 import scala.collection.JavaConverters._
 
-/**
-  * Created by benen on 18/05/17.
-  */
 class RecordProcessorFactory(val process: Seq[Record] => Unit) extends IRecordProcessorFactory {
   override def createProcessor(): IRecordProcessor = new IRecordProcessor with IShutdownNotificationAware {
+
+    var count: Long = 0
 
     override def initialize(initializationInput: InitializationInput): Unit = {
       val shardId = initializationInput.getShardId
       val seqNum = initializationInput.getExtendedSequenceNumber
-      println(s"Processing shard $shardId with sequence number $seqNum")
+      //println(s"Processing shard $shardId with sequence number $seqNum")
     }
 
     override def processRecords(processRecordsInput: ProcessRecordsInput): Unit = {
@@ -26,18 +25,24 @@ class RecordProcessorFactory(val process: Seq[Record] => Unit) extends IRecordPr
       records.foreach { record =>
         val msg = new String(record.getData.array())
         val num = record.getSequenceNumber
-        println(s"Processing the msg $num which has the value $msg")
+        //println(s"Processing the msg $num which has the value $msg")
       }
       process(records)
+      count += records.size
+
+      println()
+      println(s"I've processed $count records")
+      println()
+
       processRecordsInput.getCheckpointer.checkpoint()
     }
 
     override def shutdown(shutdownInput: ShutdownInput): Unit = {
-      println(s"Shutting down for reason ${shutdownInput.getShutdownReason}")
+      //println(s"Shutting down for reason ${shutdownInput.getShutdownReason}")
     }
 
     override def shutdownRequested(checkpointer: IRecordProcessorCheckpointer): Unit = {
-      println(s"Shutdown has been requested. Checkpointing")
+      //println(s"Shutdown has been requested. Checkpointing")
       checkpointer.checkpoint()
     }
   }

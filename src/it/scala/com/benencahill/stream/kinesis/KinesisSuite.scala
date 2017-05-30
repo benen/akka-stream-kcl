@@ -8,10 +8,7 @@ import com.whisk.docker.{DockerContainer, DockerKit, DockerReadyChecker, LogLine
 
 import scala.concurrent.duration._
 
-/**
-  * Created by benen on 15/05/17.
-  */
-trait KinesisSpec extends DockerKit {
+trait KinesisSuite extends DockerKit {
 
   System.setProperty(SDKGlobalConfiguration.AWS_CBOR_DISABLE_SYSTEM_PROPERTY, true.toString)
 
@@ -19,10 +16,10 @@ trait KinesisSpec extends DockerKit {
 
   val kinesisPort = freePort
 
-  val kinesisContainer = DockerContainer(KinesisSpec.KinesisContainerId)
+  val kinesisContainer = DockerContainer(KinesisSuite.KinesisContainerId)
     .withLogLineReceiver(LogLineReceiver(true, (s : String) => println ("*** " + s) ))
-    .withPorts(KinesisSpec.KinesisPort -> Some(kinesisPort))
-    .withReadyChecker(DockerReadyChecker.HttpResponseCode(KinesisSpec.KinesisPort, code = 403)
+    .withPorts(KinesisSuite.KinesisPort -> Some(kinesisPort))
+    .withReadyChecker(DockerReadyChecker.HttpResponseCode(KinesisSuite.KinesisPort, code = 403)
       .within(1000.millis)
       .looped(1000, 1250.millis))
 
@@ -35,7 +32,7 @@ trait KinesisSpec extends DockerKit {
     kinesisContainer :: super.dockerContainers
 }
 
-object KinesisSpec {
+object KinesisSuite {
   val KinesisContainerId = "instructure/kinesalite"
   val KinesisPort = 4567
 }

@@ -5,17 +5,14 @@ import org.scalatest.Suite
 
 import scala.concurrent.duration._
 
-/**
-  * Created by benen on 15/05/17.
-  */
-trait DynamoDbSpec extends DockerKit { self: Suite =>
+trait DynamoDbSuite extends DockerKit { self: Suite =>
 
   val dynamoDbPort = freePort
 
-  val dynamoDbContainer = DockerContainer(DynamoDbSpec.DynamoDbContainerId)
+  val dynamoDbContainer = DockerContainer(DynamoDbSuite.DynamoDbContainerId)
     .withLogLineReceiver(LogLineReceiver(true, (s : String) => println ("*** " + s) ))
-    .withPorts(DynamoDbSpec.DynamoDbPort -> Some(dynamoDbPort))
-    .withReadyChecker(DockerReadyChecker.HttpResponseCode(DynamoDbSpec.DynamoDbPort, code = 400)
+    .withPorts(DynamoDbSuite.DynamoDbPort -> Some(dynamoDbPort))
+    .withReadyChecker(DockerReadyChecker.HttpResponseCode(DynamoDbSuite.DynamoDbPort, code = 400)
       .within(1000.millis)
       .looped(1000, 1250.millis))
 
@@ -23,7 +20,7 @@ trait DynamoDbSpec extends DockerKit { self: Suite =>
     dynamoDbContainer :: super.dockerContainers
 }
 
-object DynamoDbSpec {
+object DynamoDbSuite {
   val DynamoDbContainerId = "instructure/dynamodb"
   val DynamoDbPort = 8000
 }

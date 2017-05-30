@@ -11,17 +11,14 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 import scala.concurrent.Future
 import scala.util.{Random, Try}
 
-/**
-  * Created by benen on 18/05/17.
-  */
-trait KCLSpec extends KinesisSpec with DynamoDbSpec with DockerTestKit with BeforeAndAfterAll { self: Suite =>
+trait KCLSuite extends DynamoDbSuite with KinesisSuite with DockerTestKit with BeforeAndAfterAll { self: Suite =>
 
   val streamName: String = s"${this.suiteName}-kcl-stream"
   val consumerName: String = s"${this.suiteName}-kcl-consumer"
   val workerId = s"${this.suiteName}-worker"
   val numShards: Int = 2
 
-  import KCLSpec._
+  import KCLSuite._
 
   val kclConf = new KinesisClientLibConfiguration(consumerName, streamName, credentialsProvider, workerId)
     .withInitialPositionInStream(InitialPositionInStream.TRIM_HORIZON)
@@ -48,7 +45,7 @@ trait KCLSpec extends KinesisSpec with DynamoDbSpec with DockerTestKit with Befo
   }}
 }
 
-object KCLSpec {
+object KCLSuite {
   val ActiveStatus = "ACTIVE"
 
   private val words = Seq("hello", "world", "benen", "was", "here", "how", "are", "you", "spaghetti", "horse", "dog", "cow", "I")

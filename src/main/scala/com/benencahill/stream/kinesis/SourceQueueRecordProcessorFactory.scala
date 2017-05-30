@@ -10,9 +10,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Created by benen on 13/05/17.
-  */
 class SourceQueueRecordProcessorFactory(val queue: SourceQueue[Record]) extends IRecordProcessorFactory {
   override def createProcessor(): IRecordProcessor = new IRecordProcessor with IShutdownNotificationAware {
 
