@@ -7,10 +7,11 @@ lazy val `akka-streams-kinesis` = project.in(file("."))
   .settings(Defaults.itSettings)
   .settings(Seq(
     name := "akka-streams-kinesis",
-    version := "1.0",
+    version := "0.1.0-SNAPSHOT",
     scalaVersion := "2.12.2",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
       "com.amazonaws" % "amazon-kinesis-client" % "1.7.5",
       "ch.qos.logback" % "logback-classic" % "1.1.7"
     ),
@@ -19,6 +20,6 @@ lazy val `akka-streams-kinesis` = project.in(file("."))
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "it,test",
       "com.whisk" %% "docker-testkit-scalatest" % "0.9.0" % "it,test",
       "com.whisk" %% "docker-testkit-impl-spotify" % "0.9.0" % "it,test",
-      "org.mockito" % "mockito-core" % "2.8.9" % "test"
+      "org.mockito" % "mockito-core" % "2.8.9" % "it,test"
     )
   ))

@@ -10,10 +10,8 @@ trait KinesisWorkerProvider {
 
 object KinesisWorkerProvider {
 
-  def apply(kclConf: KinesisClientLibConfiguration): KinesisWorkerProvider = new KinesisWorkerProvider {
-    override def instance(process: (Seq[Record]) => Unit): Worker =
-      worker(kclConf, new RecordProcessorFactory(process))
-  }
+  def apply(kclConf: KinesisClientLibConfiguration): KinesisWorkerProvider =
+    (process: (Seq[Record]) => Unit) => worker(kclConf, new RecordProcessorFactory(process))
 
   private def worker(kclConf: KinesisClientLibConfiguration, factory: IRecordProcessorFactory): Worker =
     new Worker.Builder()

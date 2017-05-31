@@ -22,8 +22,8 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
 
       var worker: Worker = _
       val queue = scala.collection.mutable.Queue.empty[Record]
-      var demand = false
-      var pause = false
+      var hasDemand = false
+      var isPaused = false
       var shutdownInProgress: Future[Any] = _
 
       override def preStart(): Unit = {
@@ -40,26 +40,27 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
           }
           else {
             log.debug(s"Flagging demand")
-            demand = true
-            if (pause) {
+            hasDemand = true
+            if (isPaused) {
               log.debug(s"Buffer has been drained. Starting KCL worker")
               startWorker()
-              pause = false
+              isPaused = false
             }
           }
         }
 
         override def onDownstreamFinish(): Unit = {
+          log.info(s"Shutting down due to downstream signal")
           shutdownWorker()
           super.onDownstreamFinish()
         }
       })
 
       private def getCallBack: AsyncCallback[Seq[Record]] = getAsyncCallback[Seq[Record]] { records =>
-        if (demand) {
+        if (hasDemand) {
           log.debug(s"Sending downstream")
           queue.enqueue(records.tail: _*)
-          demand = false
+          hasDemand = false
           push(out, records.head)
         }
         else {
@@ -70,7 +71,7 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
         if (queue.size > limit) {
           log.debug(s"Buffer exceeds limit, shutting down KCL")
           shutdownWorker()
-          pause = true
+          isPaused = true
         } else {
           log.debug(s"There are ${queue.size} elements on the buffer")
         }
@@ -82,24 +83,28 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
         if (shutdownInProgress == null || shutdownInProgress.isCompleted) {
           log.info(s"No prior shutdown attempt present. Invoking the worker")
           worker = kinesisWorkerProvider.instance(getCallBack.invoke)
-          Future { blocking { worker.run() }}
+          Future {
+            blocking {
+              worker.run()
+            }
+          }
         }
         else {
           log.info(s"Waiting for shutdown to complete before starting worker")
           shutdownInProgress andThen { case _ =>
             worker = kinesisWorkerProvider.instance(getCallBack.invoke)
-            blocking { worker.run() }
+            blocking {
+              worker.run()
+            }
           }
         }
       }
-
 
       private def shutdownWorker(): Unit = {
         implicit val context = materializer.executionContext
         log.info(s"Shutting down the Kinesis worker")
         shutdownInProgress = Implicits.javaFutureAsScala(worker.requestShutdown())
         shutdownInProgress.onComplete(_ => worker.shutdown())
-        log.debug(s"Doing a horrid await. Thanks Amazon")
         Await.ready(shutdownInProgress, Duration.Inf)
         log.info(s"Worker shutdown complete")
       }
@@ -107,7 +112,7 @@ class AsyncSideChannelKinesisSource(kinesisWorkerProvider: KinesisWorkerProvider
 }
 
 object AsyncSideChannelKinesisSource {
-  def apply(kclConfig: KinesisClientLibConfiguration, limit: Int = 500000): Source[Record, NotUsed] =
+  def apply(kclConfig: KinesisClientLibConfiguration, limit: Int = 1000000): Source[Record, NotUsed] =
     Source.fromGraph(new AsyncSideChannelKinesisSource(KinesisWorkerProvider(kclConfig), limit))
       .withAttributes(Attributes.logLevels(onElement = Logging.DebugLevel))
 }

@@ -23,7 +23,7 @@ class AsyncSideChannelKinesisSourceSpec
 
   behavior of "KinesisSource"
 
-  it should "Read a single element from the stream" in {
+  it should "read a single element from the stream" in {
     // given
     enqueue(1)
 
@@ -36,7 +36,7 @@ class AsyncSideChannelKinesisSourceSpec
     }
   }
 
-  it should "Read more elements than the buffer can handle" in {
+  it should "read more elements than the buffer can handle" in {
     // given
     enqueue(20000)
 
