@@ -12,6 +12,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpecLike, Matchers}
 
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Created by benen on 23/05/17.
